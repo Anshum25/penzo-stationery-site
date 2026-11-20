@@ -25,7 +25,7 @@ export async function deleteSession() {
 export const requireAdmin = cache(async () => {
   const session = await verifySession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/admin/login");
-  const user = db
+  const user = await db
     .select({ id: users.id, name: users.name, email: users.email })
     .from(users)
     .where(eq(users.id, session.userId))

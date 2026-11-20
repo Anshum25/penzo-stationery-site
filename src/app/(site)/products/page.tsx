@@ -15,10 +15,10 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
   const category = typeof sp.category === "string" ? sp.category : undefined;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 80) : undefined;
   const sort = SORTS.find((s) => s === sp.sort) ?? "featured";
-  const categories = getCategories();
-  const products = getProducts({ category, q, sort });
-  const counts = Object.fromEntries(getCategoryCounts());
-  const total = getProducts().length;
+  const categories = await getCategories();
+  const products = await getProducts({ category, q, sort });
+  const counts = Object.fromEntries(await getCategoryCounts());
+  const total = (await getProducts()).length;
   const current = categories.find((c) => c.slug === category);
 
   return (

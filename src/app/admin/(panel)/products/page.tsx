@@ -17,8 +17,8 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
   const q = typeof sp.q === "string" ? sp.q : undefined;
   const category = typeof sp.category === "string" && sp.category ? sp.category : undefined;
   const stock = sp.stock === "in" || sp.stock === "out" ? sp.stock : "";
-  const categories = getCategories();
-  const all = getProducts({ q, category });
+  const categories = await getCategories();
+  const all = await getProducts({ q, category });
   const products = stock ? all.filter((p) => p.inStock === (stock === "in")) : all;
 
   return (

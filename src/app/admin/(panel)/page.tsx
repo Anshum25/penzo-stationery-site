@@ -11,18 +11,24 @@ import { BarList, ColumnChart } from "@/components/admin/charts";
 const DAY = 86_400_000;
 
 export default async function DashboardPage() {
-  const total = (t: typeof products | typeof categories | typeof enquiries | typeof testimonials) =>
-    db.select({ v: count() }).from(t).get()?.v ?? 0;
-  const featured = db.select({ v: count() }).from(products).where(eq(products.featured, true)).get()?.v ?? 0;
-  const outOfStock = db.select({ v: count() }).from(products).where(eq(products.inStock, false)).get()?.v ?? 0;
-  const newCount = db.select({ v: count() }).from(enquiries).where(eq(enquiries.status, "new")).get()?.v ?? 0;
-  const recent = db.select().from(enquiries).orderBy(desc(enquiries.createdAt)).limit(6).all();
+  const total = async (t: typeof products | typeof categories | typeof enquiries | typeof testimonials) =>
+    (await db.select({ v: count() }).from(t).get())?.v ?? 0;
+  const [productTotal, categoryTotal, enquiryTotal, testimonialTotal] = await Promise.all([
+    total(products),
+    total(categories),
+    total(enquiries),
+    total(testimonials),
+  ]);
+  const featured = (await db.select({ v: count() }).from(products).where(eq(products.featured, true)).get())?.v ?? 0;
+  const outOfStock = (await db.select({ v: count() }).from(products).where(eq(products.inStock, false)).get())?.v ?? 0;
+  const newCount = (await db.select({ v: count() }).from(enquiries).where(eq(enquiries.status, "new")).get())?.v ?? 0;
+  const recent = await db.select().from(enquiries).orderBy(desc(enquiries.createdAt)).limit(6).all();
 
   // Enquiries per day, last 30 days.
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const start = new Date(today.getTime() - 29 * DAY);
-  const last30 = db.select({ createdAt: enquiries.createdAt, type: enquiries.type }).from(enquiries).where(gte(enquiries.createdAt, start)).all();
+  const last30 = await db.select({ createdAt: enquiries.createdAt, type: enquiries.type }).from(enquiries).where(gte(enquiries.createdAt, start)).all();
   const daily = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(start.getTime() + i * DAY);
     return { label: d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }), value: 0, t: d.getTime() };
@@ -33,7 +39,7 @@ export default async function DashboardPage() {
   }
   const bulk30 = last30.filter((e) => e.type === "bulk").length;
 
-  const byCategory = db
+  const byCategory = await db
     .select({ label: categories.name, value: count(products.id) })
     .from(categories)
     .leftJoin(products, eq(products.categoryId, categories.id))
@@ -42,10 +48,10 @@ export default async function DashboardPage() {
     .all();
 
   const stats = [
-    { label: "Products", value: total(products), sub: `${featured} featured`, icon: Package, href: "/admin/products" },
+    { label: "Products", value: productTotal, sub: `${featured} featured`, icon: Package, href: "/admin/products" },
     { label: "Out of stock", value: outOfStock, sub: outOfStock ? "needs attention" : "all items available", icon: PackageX, href: "/admin/products?stock=out" },
-    { label: "New enquiries", value: newCount, sub: `${total(enquiries)} total`, icon: Inbox, href: "/admin/enquiries?status=new" },
-    { label: "Testimonials", value: total(testimonials), sub: `${total(categories)} categories`, icon: MessageSquareQuote, href: "/admin/testimonials" },
+    { label: "New enquiries", value: newCount, sub: `${enquiryTotal} total`, icon: Inbox, href: "/admin/enquiries?status=new" },
+    { label: "Testimonials", value: testimonialTotal, sub: `${categoryTotal} categories`, icon: MessageSquareQuote, href: "/admin/testimonials" },
   ];
 
   const hour = new Date().getHours();

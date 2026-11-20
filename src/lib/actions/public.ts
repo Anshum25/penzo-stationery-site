@@ -18,7 +18,7 @@ export async function submitEnquiry(_prev: FormState, formData: FormData): Promi
   const parsed = EnquirySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
 
-  db.insert(enquiries).values({ ...parsed.data, createdAt: new Date() }).run();
+  await db.insert(enquiries).values({ ...parsed.data, createdAt: new Date() }).run();
   revalidatePath("/admin", "layout");
   return { ok: true, message: "Thanks! We'll get back to you within one business day." };
 }

@@ -5,8 +5,8 @@ import { Preloader } from "@/components/motion/preloader";
 import { Navbar } from "@/components/site/navbar";
 import { Footer } from "@/components/site/footer";
 
-export default function SiteLayout({ children }: LayoutProps<"/">) {
-  const categories = getCategories().map(({ name, slug, description, image }) => ({ name, slug, description, image }));
+export default async function SiteLayout({ children }: LayoutProps<"/">) {
+  const categories = (await getCategories()).map(({ name, slug, description, image }) => ({ name, slug, description, image }));
   return (
     <MotionConfig reducedMotion="user">
       <div className="paper-grain flex min-h-screen flex-col">

@@ -27,15 +27,15 @@ const deskSpots = [
   { slug: "glide-gel-pen-set-10-colours", x: 12, y: 41 },
 ];
 
-export default function HomePage() {
-  const categories = getCategories();
-  const all = getProducts();
-  const testimonials = getPublishedTestimonials();
-  const latestPosts = getPosts({ limit: 3 });
+export default async function HomePage() {
+  const categories = await getCategories();
+  const all = await getProducts();
+  const testimonials = await getPublishedTestimonials();
+  const latestPosts = await getPosts({ limit: 3 });
 
   const tabs = [
-    { key: "best", label: "Bestsellers", href: "/products", products: getProducts({ featured: true }).slice(0, 8) },
-    { key: "new", label: "New arrivals", href: "/products?sort=newest", products: getProducts({ sort: "newest" }).slice(0, 8) },
+    { key: "best", label: "Bestsellers", href: "/products", products: (await getProducts({ featured: true })).slice(0, 8) },
+    { key: "new", label: "New arrivals", href: "/products?sort=newest", products: (await getProducts({ sort: "newest" })).slice(0, 8) },
     { key: "value", label: "Under ₹500", href: "/products?sort=price-asc", products: all.filter((p) => p.price < 500).slice(0, 8) },
     {
       key: "gift",
@@ -53,10 +53,9 @@ export default function HomePage() {
 
   const office = categories.find((c) => c.slug === "office");
   const spots: Hotspot[] = [
-    ...deskSpots.flatMap(({ slug, x, y }) => {
-      const p = getProductBySlug(slug);
-      return p ? [{ x, y, title: p.name, subtitle: formatPrice(p.price), href: `/products/${p.slug}`, image: p.image }] : [];
-    }),
+    ...(await Promise.all(deskSpots.map(async ({ slug, x, y }) => ({ x, y, p: await getProductBySlug(slug) })))).flatMap(({ x, y, p }) =>
+      p ? [{ x, y, title: p.name, subtitle: formatPrice(p.price), href: `/products/${p.slug}`, image: p.image }] : [],
+    ),
     ...(office ? [{ x: 81, y: 68, title: office.name, subtitle: "Staplers, files & desk tools", href: `/products?category=${office.slug}`, image: office.image }] : []),
   ];
 

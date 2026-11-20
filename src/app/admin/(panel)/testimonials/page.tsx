@@ -8,8 +8,8 @@ import { PageTitle } from "@/components/admin/page-title";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { TestimonialDialog } from "@/components/admin/testimonial-dialog";
 
-export default function TestimonialsPage() {
-  const rows = db.select().from(testimonials).all();
+export default async function TestimonialsPage() {
+  const rows = await db.select().from(testimonials).all();
   return (
     <>
       <PageTitle title="Testimonials" description="Customer quotes shown in the homepage card stack.">

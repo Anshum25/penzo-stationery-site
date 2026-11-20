@@ -11,7 +11,7 @@ import { CtaBand } from "@/components/site/cta-band";
 import { Reveal, SplitReveal } from "@/components/motion/reveal";
 
 export async function generateMetadata({ params }: PageProps<"/products/[slug]">): Promise<Metadata> {
-  const product = getProductBySlug((await params).slug);
+  const product = await getProductBySlug((await params).slug);
   return product ? { title: product.name, description: product.description } : {};
 }
 
@@ -22,11 +22,11 @@ const tierRows = [
 ];
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
-  const product = getProductBySlug((await params).slug);
+  const product = await getProductBySlug((await params).slug);
   if (!product) notFound();
 
   const related = product.categorySlug
-    ? getProducts({ category: product.categorySlug }).filter((p) => p.id !== product.id).slice(0, 4)
+    ? (await getProducts({ category: product.categorySlug })).filter((p) => p.id !== product.id).slice(0, 4)
     : [];
 
   const specs = [

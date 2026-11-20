@@ -17,7 +17,7 @@ export default async function EnquiriesPage({ searchParams }: PageProps<"/admin/
   const q = typeof sp.q === "string" && sp.q.trim() ? sp.q.trim() : undefined;
   const type = sp.type === "bulk" || sp.type === "general" ? sp.type : "";
   const term = q ? `%${q}%` : "";
-  const rows = db
+  const rows = await db
     .select()
     .from(enquiries)
     .where(

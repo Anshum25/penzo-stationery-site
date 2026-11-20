@@ -1,4 +1,4 @@
-import type Database from "better-sqlite3";
+import type { Client, InStatement } from "@libsql/client";
 import bcrypt from "bcryptjs";
 import { unsplash } from "@/lib/images";
 import { demoPosts } from "./demo-posts";
@@ -119,71 +119,77 @@ function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-export function bootstrap(sqlite: Database.Database) {
-  sqlite.exec(DDL);
-  migrate(sqlite);
+/** Creates tables, applies additive migrations and seeds demo content into an empty database. Safe to re-run. */
+export async function setupDatabase(client: Client) {
+  await client.executeMultiple(DDL);
+  await migrate(client);
 
-  sqlite
-    .transaction(() => {
-      const userCount = sqlite.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number };
-      if (userCount.c === 0) {
-        const email = process.env.ADMIN_EMAIL;
-        const password = process.env.ADMIN_PASSWORD;
-        if (email && password) {
-          sqlite
-            .prepare("INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)")
-            .run("Admin", email.toLowerCase(), bcrypt.hashSync(password, 10), Date.now());
-        }
-      }
+  const count = async (table: string) => Number((await client.execute(`SELECT COUNT(*) AS c FROM ${table}`)).rows[0].c);
+  const writes: InStatement[] = [];
 
-      const postCount = sqlite.prepare("SELECT COUNT(*) AS c FROM posts").get() as { c: number };
-      if (postCount.c === 0) {
-        const insertPost = sqlite.prepare(
-          "INSERT INTO posts (title, slug, excerpt, body, topic, cover, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        );
-        demoPosts.forEach((p, i) =>
-          insertPost.run(p.title, slugify(p.title), p.excerpt, p.body, p.topic, unsplash(p.cover, 1600), Date.now() - i * 5 * 86_400_000),
-        );
-      }
-
-      const catCount = sqlite.prepare("SELECT COUNT(*) AS c FROM categories").get() as { c: number };
-      if (catCount.c > 0) return;
-
-      const insertCat = sqlite.prepare(
-        "INSERT INTO categories (name, slug, description, illustration, accent, image, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      );
-      const catIds = new Map<string, number>();
-      demoCategories.forEach(([name, slug, desc, ill, accent, photo], i) => {
-        catIds.set(slug, Number(insertCat.run(name, slug, desc, ill, accent, unsplash(photo, 1200), i).lastInsertRowid));
+  if ((await count("users")) === 0) {
+    const email = process.env.ADMIN_EMAIL;
+    const password = process.env.ADMIN_PASSWORD;
+    if (email && password) {
+      writes.push({
+        sql: "INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+        args: ["Admin", email.toLowerCase(), bcrypt.hashSync(password, 10), Date.now()],
       });
+    } else {
+      console.warn("No users and ADMIN_EMAIL/ADMIN_PASSWORD not set — skipping admin account.");
+    }
+  }
 
-      const insertProduct = sqlite.prepare(
-        "INSERT INTO products (name, slug, sku, description, price, category_id, image, featured, in_stock, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
-      );
-      demoProducts.forEach(([name, cat, price, desc, featured], i) => {
-        insertProduct.run(
-          name,
-          slugify(name),
-          `PNZ-${String(i + 1).padStart(3, "0")}`,
-          desc,
-          price,
-          catIds.get(cat) ?? null,
-          unsplash(demoProductPhotos[i], 900),
-          featured ? 1 : 0,
-          Date.now() - i * 1000,
-        );
-      });
+  if ((await count("posts")) === 0) {
+    demoPosts.forEach((p, i) =>
+      writes.push({
+        sql: "INSERT INTO posts (title, slug, excerpt, body, topic, cover, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        args: [p.title, slugify(p.title), p.excerpt, p.body, p.topic, unsplash(p.cover, 1600), Date.now() - i * 5 * 86_400_000],
+      }),
+    );
+  }
 
-      const insertT = sqlite.prepare("INSERT INTO testimonials (name, role, quote, rating) VALUES (?, ?, ?, 5)");
-      demoTestimonials.forEach(([n, r, q]) => insertT.run(n, r, q));
-    })
-    .immediate();
+  if ((await count("testimonials")) === 0) {
+    demoTestimonials.forEach(([n, r, q]) =>
+      writes.push({ sql: "INSERT INTO testimonials (name, role, quote, rating) VALUES (?, ?, ?, 5)", args: [n, r, q] }),
+    );
+  }
+  if (writes.length) await client.batch(writes, "write");
+
+  if ((await count("categories")) > 0) return;
+
+  // Categories first so products can reference their ids.
+  await client.batch(
+    demoCategories.map(([name, slug, desc, ill, accent, photo], i) => ({
+      sql: "INSERT INTO categories (name, slug, description, illustration, accent, image, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      args: [name, slug, desc, ill, accent, unsplash(photo, 1200), i],
+    })),
+    "write",
+  );
+  const catIds = new Map(
+    (await client.execute("SELECT id, slug FROM categories")).rows.map((r) => [String(r.slug), Number(r.id)]),
+  );
+  await client.batch(
+    demoProducts.map(([name, cat, price, desc, featured], i) => ({
+      sql: "INSERT INTO products (name, slug, sku, description, price, category_id, image, featured, in_stock, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
+      args: [
+        name,
+        slugify(name),
+        `PNZ-${String(i + 1).padStart(3, "0")}`,
+        desc,
+        price,
+        catIds.get(cat) ?? null,
+        unsplash(demoProductPhotos[i], 900),
+        featured ? 1 : 0,
+        Date.now() - i * 1000,
+      ],
+    })),
+    "write",
+  );
 }
 
 /** Additive schema changes for databases created by earlier versions. */
-function migrate(sqlite: Database.Database) {
-  const cols = sqlite.prepare("PRAGMA table_info(categories)").all() as { name: string }[];
-  if (!cols.some((c) => c.name === "image")) {
-    sqlite.exec("ALTER TABLE categories ADD COLUMN image TEXT");
-  }
+async function migrate(client: Client) {
+  const cols = (await client.execute("PRAGMA table_info(categories)")).rows.map((r) => String(r.name));
+  if (!cols.includes("image")) await client.execute("ALTER TABLE categories ADD COLUMN image TEXT");
 }

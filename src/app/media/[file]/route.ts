@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { UPLOAD_DIR } from "@/lib/db";
+import { UPLOAD_DIR } from "@/lib/upload";
 
 const TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",

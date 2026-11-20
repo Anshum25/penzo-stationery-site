@@ -45,7 +45,7 @@ export async function saveProduct(id: number | null, _prev: FormState, formData:
     return { errors: { image: [(e as Error).message] } };
   }
 
-  const existing = id ? db.select().from(products).where(eq(products.id, id)).get() : undefined;
+  const existing = id ? await db.select().from(products).where(eq(products.id, id)).get() : undefined;
   if (id && !existing) return { message: "Product not found." };
   if (image || d.removeImage) await deleteImage(existing?.image);
 
@@ -62,8 +62,8 @@ export async function saveProduct(id: number | null, _prev: FormState, formData:
   };
 
   try {
-    if (id) db.update(products).set(values).where(eq(products.id, id)).run();
-    else db.insert(products).values({ ...values, createdAt: new Date() }).run();
+    if (id) await db.update(products).set(values).where(eq(products.id, id)).run();
+    else await db.insert(products).values({ ...values, createdAt: new Date() }).run();
   } catch (e) {
     if (isUniqueError(e)) return { errors: { slug: ["Another product already uses this URL slug."] } };
     throw e;
@@ -75,16 +75,16 @@ export async function saveProduct(id: number | null, _prev: FormState, formData:
 
 export async function deleteProduct(id: number) {
   await requireAdmin();
-  const p = db.select().from(products).where(eq(products.id, id)).get();
+  const p = await db.select().from(products).where(eq(products.id, id)).get();
   if (!p) return;
-  db.delete(products).where(eq(products.id, id)).run();
+  await db.delete(products).where(eq(products.id, id)).run();
   await deleteImage(p.image);
   refresh();
 }
 
 export async function toggleProductFlag(id: number, flag: "featured" | "inStock", value: boolean) {
   await requireAdmin();
-  db.update(products).set({ [flag]: value }).where(eq(products.id, id)).run();
+  await db.update(products).set({ [flag]: value }).where(eq(products.id, id)).run();
   refresh();
 }
 
@@ -108,12 +108,12 @@ export async function saveCategory(id: number | null, _prev: FormState, formData
   } catch (e) {
     return { errors: { image: [(e as Error).message] } };
   }
-  const existing = id ? db.select().from(categories).where(eq(categories.id, id)).get() : undefined;
+  const existing = id ? await db.select().from(categories).where(eq(categories.id, id)).get() : undefined;
   if (image) await deleteImage(existing?.image);
   const values = { ...parsed.data, slug: slugify(parsed.data.name), ...(image ? { image } : {}) };
   try {
-    if (id) db.update(categories).set(values).where(eq(categories.id, id)).run();
-    else db.insert(categories).values(values).run();
+    if (id) await db.update(categories).set(values).where(eq(categories.id, id)).run();
+    else await db.insert(categories).values(values).run();
   } catch (e) {
     if (isUniqueError(e)) return { errors: { name: ["A category with this name already exists."] } };
     throw e;
@@ -124,7 +124,7 @@ export async function saveCategory(id: number | null, _prev: FormState, formData
 
 export async function deleteCategory(id: number) {
   await requireAdmin();
-  db.delete(categories).where(eq(categories.id, id)).run();
+  await db.delete(categories).where(eq(categories.id, id)).run();
   refresh();
 }
 
@@ -132,13 +132,13 @@ export async function deleteCategory(id: number) {
 
 export async function setEnquiryStatus(id: number, status: "new" | "read" | "replied") {
   await requireAdmin();
-  db.update(enquiries).set({ status }).where(eq(enquiries.id, id)).run();
+  await db.update(enquiries).set({ status }).where(eq(enquiries.id, id)).run();
   revalidatePath("/admin", "layout");
 }
 
 export async function deleteEnquiry(id: number) {
   await requireAdmin();
-  db.delete(enquiries).where(eq(enquiries.id, id)).run();
+  await db.delete(enquiries).where(eq(enquiries.id, id)).run();
   revalidatePath("/admin", "layout");
 }
 
@@ -157,15 +157,15 @@ export async function saveTestimonial(id: number | null, _prev: FormState, formD
   const parsed = TestimonialSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
   const values = { ...parsed.data, published: parsed.data.published === "on" };
-  if (id) db.update(testimonials).set(values).where(eq(testimonials.id, id)).run();
-  else db.insert(testimonials).values(values).run();
+  if (id) await db.update(testimonials).set(values).where(eq(testimonials.id, id)).run();
+  else await db.insert(testimonials).values(values).run();
   refresh();
   return { ok: true, message: id ? "Testimonial updated" : "Testimonial added" };
 }
 
 export async function deleteTestimonial(id: number) {
   await requireAdmin();
-  db.delete(testimonials).where(eq(testimonials.id, id)).run();
+  await db.delete(testimonials).where(eq(testimonials.id, id)).run();
   refresh();
 }
 
@@ -194,7 +194,7 @@ export async function savePost(id: number | null, _prev: FormState, formData: Fo
   } catch (e) {
     return { errors: { image: [(e as Error).message] } };
   }
-  const existing = id ? db.select().from(posts).where(eq(posts.id, id)).get() : undefined;
+  const existing = id ? await db.select().from(posts).where(eq(posts.id, id)).get() : undefined;
   if (id && !existing) return { message: "Article not found." };
   if (cover || d.removeImage) await deleteImage(existing?.cover);
 
@@ -209,8 +209,8 @@ export async function savePost(id: number | null, _prev: FormState, formData: Fo
     cover: cover ?? (d.removeImage ? null : (existing?.cover ?? null)),
   };
   try {
-    if (id) db.update(posts).set(values).where(eq(posts.id, id)).run();
-    else db.insert(posts).values({ ...values, createdAt: new Date() }).run();
+    if (id) await db.update(posts).set(values).where(eq(posts.id, id)).run();
+    else await db.insert(posts).values({ ...values, createdAt: new Date() }).run();
   } catch (e) {
     if (isUniqueError(e)) return { errors: { slug: ["Another article already uses this URL slug."] } };
     throw e;
@@ -221,15 +221,15 @@ export async function savePost(id: number | null, _prev: FormState, formData: Fo
 
 export async function deletePost(id: number) {
   await requireAdmin();
-  const p = db.select().from(posts).where(eq(posts.id, id)).get();
+  const p = await db.select().from(posts).where(eq(posts.id, id)).get();
   if (!p) return;
-  db.delete(posts).where(eq(posts.id, id)).run();
+  await db.delete(posts).where(eq(posts.id, id)).run();
   await deleteImage(p.cover);
   refresh();
 }
 
 export async function setPostPublished(id: number, published: boolean) {
   await requireAdmin();
-  db.update(posts).set({ published }).where(eq(posts.id, id)).run();
+  await db.update(posts).set({ published }).where(eq(posts.id, id)).run();
   refresh();
 }

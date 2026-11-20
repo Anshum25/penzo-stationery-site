@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   description: "Wholesale pricing, custom branding and reliable delivery for businesses, schools and events.",
 };
 
-export default function BulkOrdersPage() {
-  const popular = getProducts()
+export default async function BulkOrdersPage() {
+  const popular = (await getProducts())
     .filter((p) => ["gifts", "office", "notebooks", "planners"].includes(p.categorySlug ?? ""))
     .slice(0, 4);
 

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function JournalPage({ searchParams }: PageProps<"/journal">) {
   const sp = await searchParams;
-  const all = getPosts();
+  const all = await getPosts();
   const topics = [...new Set(all.map((p) => p.topic))];
   const topic = typeof sp.topic === "string" && topics.includes(sp.topic) ? sp.topic : undefined;
   const posts = topic ? all.filter((p) => p.topic === topic) : all;

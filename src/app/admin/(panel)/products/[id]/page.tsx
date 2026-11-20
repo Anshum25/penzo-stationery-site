@@ -10,7 +10,7 @@ import { ProductForm } from "@/components/admin/product-form";
 
 export default async function EditProductPage({ params }: PageProps<"/admin/products/[id]">) {
   const id = Number((await params).id);
-  const product = Number.isInteger(id) ? db.select().from(products).where(eq(products.id, id)).get() : undefined;
+  const product = Number.isInteger(id) ? await db.select().from(products).where(eq(products.id, id)).get() : undefined;
   if (!product) notFound();
 
   return (
@@ -20,7 +20,7 @@ export default async function EditProductPage({ params }: PageProps<"/admin/prod
           <ExternalLink /> View on site
         </Link>
       </PageTitle>
-      <ProductForm product={product} categories={getCategories()} />
+      <ProductForm product={product} categories={await getCategories()} />
     </>
   );
 }

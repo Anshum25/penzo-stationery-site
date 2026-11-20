@@ -9,8 +9,8 @@ import { CategoryDialog } from "@/components/admin/category-dialog";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { Illustration } from "@/components/site/illustration";
 
-export default function CategoriesPage() {
-  const rows = db
+export default async function CategoriesPage() {
+  const rows = await db
     .select({ category: categories, productCount: count(products.id) })
     .from(categories)
     .leftJoin(products, eq(products.categoryId, categories.id))

@@ -12,8 +12,8 @@ import { PageTitle } from "@/components/admin/page-title";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { PostPublishSwitch } from "@/components/admin/post-publish-switch";
 
-export default function AdminJournalPage() {
-  const rows = db.select().from(posts).orderBy(desc(posts.createdAt)).all();
+export default async function AdminJournalPage() {
+  const rows = await db.select().from(posts).orderBy(desc(posts.createdAt)).all();
   return (
     <>
       <PageTitle title="Journal" description={`${rows.length} article${rows.length === 1 ? "" : "s"} · shown on the website journal and homepage.`}>

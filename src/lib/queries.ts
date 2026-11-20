@@ -21,8 +21,8 @@ const productWithCategory = {
 
 export type ProductCardData = Awaited<ReturnType<typeof getProducts>>[number];
 
-export function getCategories() {
-  return db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name)).all();
+export async function getCategories() {
+  return await db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name)).all();
 }
 
 export type ProductSort = "featured" | "newest" | "price-asc" | "price-desc";
@@ -57,8 +57,8 @@ function orderFor(sort: ProductSort) {
   }
 }
 
-export function getCategoryCounts() {
-  const rows = db.select({ id: products.categoryId, n: count() }).from(products).groupBy(products.categoryId).all();
+export async function getCategoryCounts() {
+  const rows = await db.select({ id: products.categoryId, n: count() }).from(products).groupBy(products.categoryId).all();
   return new Map(rows.map((r) => [r.id, r.n]));
 }
 
@@ -71,21 +71,22 @@ export function getProductBySlug(slug: string) {
     .get();
 }
 
-export function getPublishedTestimonials() {
-  return db.select().from(testimonials).where(eq(testimonials.published, true)).all();
+export async function getPublishedTestimonials() {
+  return await db.select().from(testimonials).where(eq(testimonials.published, true)).all();
 }
 
 export function getPosts(opts: { limit?: number; topic?: string } = {}) {
-  const q = db
+  return db
     .select()
     .from(posts)
     .where(and(eq(posts.published, true), opts.topic ? eq(posts.topic, opts.topic) : undefined))
-    .orderBy(desc(posts.createdAt));
-  return opts.limit ? q.limit(opts.limit).all() : q.all();
+    .orderBy(desc(posts.createdAt))
+    .limit(opts.limit ?? -1)
+    .all();
 }
 
-export function getPostBySlug(slug: string) {
-  return db.select().from(posts).where(and(eq(posts.slug, slug), eq(posts.published, true))).get();
+export async function getPostBySlug(slug: string) {
+  return await db.select().from(posts).where(and(eq(posts.slug, slug), eq(posts.published, true))).get();
 }
 
 /** Rough reading time at ~220 words per minute. */

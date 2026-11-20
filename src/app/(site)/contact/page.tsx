@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Contact" };
 export default async function ContactPage({ searchParams }: PageProps<"/contact">) {
   const sp = await searchParams;
   const type = sp.type === "bulk" ? "bulk" : "general";
-  const product = typeof sp.product === "string" ? getProductBySlug(sp.product) : undefined;
+  const product = typeof sp.product === "string" ? await getProductBySlug(sp.product) : undefined;
   const defaultMessage = product ? `Hi! I'm interested in "${product.name}" (${product.sku}). Quantity: ` : undefined;
 
   const contacts = [

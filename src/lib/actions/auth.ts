@@ -17,7 +17,7 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   const parsed = LoginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
 
-  const user = db.select().from(users).where(eq(users.email, parsed.data.email.toLowerCase())).get();
+  const user = await db.select().from(users).where(eq(users.email, parsed.data.email.toLowerCase())).get();
   const valid = user && (await bcrypt.compare(parsed.data.password, user.passwordHash));
   if (!user || !valid) return { message: "Invalid email or password." };
 

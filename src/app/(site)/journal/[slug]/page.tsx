@@ -11,17 +11,17 @@ import { Reveal, SplitReveal } from "@/components/motion/reveal";
 import { LogoTile } from "@/components/brand/logo";
 
 export async function generateMetadata({ params }: PageProps<"/journal/[slug]">): Promise<Metadata> {
-  const post = getPostBySlug((await params).slug);
+  const post = await getPostBySlug((await params).slug);
   return post ? { title: post.title, description: post.excerpt, openGraph: post.cover ? { images: [post.cover] } : undefined } : {};
 }
 
 export default async function ArticlePage({ params }: PageProps<"/journal/[slug]">) {
-  const post = getPostBySlug((await params).slug);
+  const post = await getPostBySlug((await params).slug);
   if (!post) notFound();
 
   const headings = articleHeadings(post.body);
-  const more = getPosts().filter((p) => p.id !== post.id).slice(0, 3);
-  const products = getProducts({ featured: true }).slice(0, 4);
+  const more = (await getPosts()).filter((p) => p.id !== post.id).slice(0, 3);
+  const products = (await getProducts({ featured: true })).slice(0, 4);
 
   return (
     <>

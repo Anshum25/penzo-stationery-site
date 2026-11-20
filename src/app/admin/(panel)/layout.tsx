@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: { default: "Admin", template: "%s · 
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const user = await requireAdmin();
-  const [{ value: newEnquiries }] = db.select({ value: count() }).from(enquiries).where(eq(enquiries.status, "new")).all();
+  const [{ value: newEnquiries }] = await db.select({ value: count() }).from(enquiries).where(eq(enquiries.status, "new")).all();
 
   return (
     <div className="min-h-screen bg-muted/40">
