@@ -372,8 +372,8 @@ function StickyNote() {
       className="relative p-3 pb-4 font-hand text-ink shadow-[0_18px_30px_-16px_rgba(21,20,19,.4)]"
       style={{ background: "linear-gradient(160deg, #f8dc7a, #f2c955)" }}
     >
-      <p className="text-lg leading-none font-bold">to buy ✍︎</p>
-      <ul className="mt-2 space-y-0.5 text-[15px] leading-tight whitespace-nowrap">
+      <p className="text-2xl leading-none font-bold">to buy ✍︎</p>
+      <ul className="mt-1.5 space-y-0.5 text-xl leading-tight font-medium whitespace-nowrap">
         {list.map(([t, done]) => (
           <li key={t} className="flex items-start gap-1.5">
             <span className="text-vermilion">{done ? "✓" : "○"}</span>
@@ -418,13 +418,13 @@ function DragHint({ ready, onShuffle }: { ready: boolean; onShuffle: () => void 
       <button
         type="button"
         onClick={onShuffle}
-        className="group flex items-center gap-1.5 rounded-full px-2 py-0.5 font-hand text-lg transition-colors hover:text-ink"
+        className="group flex items-center gap-1.5 rounded-full px-2 py-0.5 font-hand text-[22px] font-medium transition-colors hover:text-ink"
       >
         <Shuffle className="size-3.5 transition-transform duration-500 group-hover:rotate-180" />
         shuffle the desk
       </button>
       <div className="pointer-events-none flex items-end gap-1">
-        <span className="-rotate-6 font-hand text-xl">drag us around</span>
+        <span className="-rotate-6 font-hand text-2xl font-medium">drag us around</span>
         <svg viewBox="0 0 60 40" className="h-8 w-12 text-vermilion" fill="none" aria-hidden>
           <motion.path
             d="M2 34 C 18 30, 34 22, 50 6"
