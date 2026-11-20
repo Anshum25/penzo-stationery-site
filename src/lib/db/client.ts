@@ -1,12 +1,17 @@
+import path from "node:path";
 import { createClient } from "@libsql/client";
 
 /**
- * Turso in production (TURSO_DATABASE_URL + TURSO_AUTH_TOKEN, set by the Vercel integration);
- * a local SQLite file in development.
+ * Which database to use:
+ * - Turso when TURSO_DATABASE_URL is set (production, once the Vercel integration is added)
+ * - the bundled read-only demo database when deployed without Turso (frontend-only preview)
+ * - the local data/app.db file in development
  */
+export const isReadOnlyDemo = !process.env.TURSO_DATABASE_URL && Boolean(process.env.VERCEL);
+
 export function createDbClient() {
-  return createClient({
-    url: process.env.TURSO_DATABASE_URL ?? "file:data/app.db",
-    authToken: process.env.TURSO_AUTH_TOKEN,
-  });
+  const url =
+    process.env.TURSO_DATABASE_URL ??
+    (isReadOnlyDemo ? `file:${path.join(/*turbopackIgnore: true*/ process.cwd(), "demo", "penzo-demo.db")}` : "file:data/app.db");
+  return createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN });
 }

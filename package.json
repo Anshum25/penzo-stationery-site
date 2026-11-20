@@ -10,7 +10,8 @@
     "db:setup": "tsx --env-file-if-exists=.env.local scripts/db-setup.mts",
     "db:setup:prod": "tsx --env-file=.env.production.local scripts/db-setup.mts",
     "admin:reset": "tsx --env-file-if-exists=.env.local scripts/reset-admin.mts",
-    "admin:reset:prod": "tsx --env-file=.env.production.local scripts/reset-admin.mts"
+    "admin:reset:prod": "tsx --env-file=.env.production.local scripts/reset-admin.mts",
+    "db:demo": "tsx scripts/demo-db.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

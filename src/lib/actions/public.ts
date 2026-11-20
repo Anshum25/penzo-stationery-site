@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, enquiries } from "@/lib/db";
+import { isReadOnlyDemo } from "@/lib/db/client";
+import { site } from "@/lib/site";
 import type { FormState } from "./types";
 
 const EnquirySchema = z.object({
@@ -18,7 +20,14 @@ export async function submitEnquiry(_prev: FormState, formData: FormData): Promi
   const parsed = EnquirySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { errors: z.flattenError(parsed.error).fieldErrors };
 
-  await db.insert(enquiries).values({ ...parsed.data, createdAt: new Date() }).run();
+  const unavailable = `Our form is temporarily unavailable — please email us at ${site.email} or call ${site.phone}.`;
+  if (isReadOnlyDemo) return { message: unavailable };
+  try {
+    await db.insert(enquiries).values({ ...parsed.data, createdAt: new Date() }).run();
+  } catch (e) {
+    console.error("Failed to save enquiry", e);
+    return { message: unavailable };
+  }
   revalidatePath("/admin", "layout");
   return { ok: true, message: "Thanks! We'll get back to you within one business day." };
 }
