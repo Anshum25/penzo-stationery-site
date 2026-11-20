@@ -9,6 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-manrope);
+  --font-hand: var(--font-caveat);
   --color-vermilion: var(--vermilion);
   --color-mustard: var(--mustard);
   --color-cobalt: var(--cobalt);

@@ -61,7 +61,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero items={heroItems} />
+      <Hero items={heroItems} categories={categories.map(({ name, slug }) => ({ name, slug }))} />
       <MarqueeBand />
 
       <section id="categories" className="mx-auto max-w-7xl px-4 pt-28 pb-24 md:px-8 md:pt-36">
